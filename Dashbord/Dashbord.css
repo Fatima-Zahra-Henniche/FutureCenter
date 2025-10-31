@@ -1,0 +1,168 @@
+/* dashboard.css - RTL friendly */
+    :root{
+      --card-border-radius: 8px;
+      --card-padding: 14px;
+      --green: #2E7D32;
+      --blue: #1565C0;
+      --bg: #f5f7fb;
+      --card-bg: #fff;
+      --muted: #666;
+      --accent: #2d89ef;
+      --danger: #ff6b6b;
+    }
+
+    * { box-sizing: border-box; }
+    
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: "Cairo", "Segoe UI", Tahoma, Arial, sans-serif;
+      background: var(--bg);
+      color: #222;
+      direction: rtl;
+      text-align: right;
+    }
+
+    body {
+      display: flex;
+      padding: 0;
+    }
+
+    .sidebar {
+      width: 240px;
+      background: linear-gradient(180deg, #673ab7, #512da8);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      padding-top: 20px;
+      box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+      height: 100vh;
+      position: fixed;
+      right: 0;
+      top: 0;
+      z-index: 1000;
+      overflow-y: auto;
+    }
+
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .menu {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 0 10px;
+    }
+
+    .menu a {
+      text-decoration: none;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .menu a:hover,
+    .menu a.active {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 18px 240px 18px 18px; /* Adjusted for sidebar */
+      padding: 18px;
+      background: transparent;
+      flex: 1;
+    }
+
+    /* Header */
+    .header { margin-bottom: 12px; }
+    .header h1 { margin: 0 0 6px 0; font-size: 20px; font-weight: 700; }
+
+    /* Stats row */
+    .stats-row { 
+      display: flex; 
+      gap: 12px; 
+      margin-bottom: 18px; 
+      flex-wrap: wrap; 
+    }
+    
+    .stat-card { 
+      flex: 1 1 260px; 
+      background: var(--card-bg); 
+      border-radius: var(--card-border-radius); 
+      padding: var(--card-padding); 
+      box-shadow: 0 6px 18px rgba(24,24,24,0.05); 
+      border: 2px solid rgba(0,0,0,0.04); 
+    }
+    
+    .stat-value { 
+      font-size: 28px; 
+      font-weight: 800; 
+      margin-bottom: 6px; 
+      color: var(--green); 
+    }
+    
+    #groups-card .stat-value { color: var(--blue); }
+    /* you can add more specific card colors via IDs */
+
+    .stat-title { font-size: 16px; font-weight: 700; color: #333; }
+    .stat-desc { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+    /* bottom row: panels */
+    .bottom-row { display: flex; gap: 16px; }
+    .panel { 
+      flex: 1 1 50%; 
+      background: var(--card-bg); 
+      padding: 12px; 
+      border-radius: 8px; 
+      box-shadow: 0 6px 18px rgba(24,24,24,0.04); 
+    }
+    
+    .panel h2 { margin: 0 0 8px 0; font-size: 16px; }
+
+    /* table styling */
+    .table-wrap { overflow: auto; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .data-table thead th { 
+      text-align: right; 
+      padding: 8px 10px; 
+      background: transparent; 
+      color: #333; 
+      font-weight: 700; 
+      border-bottom: 2px solid #eee; 
+    }
+    
+    .data-table tbody td { 
+      padding: 10px 8px; 
+      border-bottom: 1px solid #f0f0f0; 
+      text-align: right; 
+    }
+    
+    .data-table tbody tr:nth-child(even) { background: #fbfcff; }
+
+    /* footer */
+    .footer { margin-top: 12px; text-align: center; color: var(--muted); font-size: 13px; }
+
+    /* responsive */
+    @media (max-width: 900px) {
+      body {
+        flex-direction: column;
+      }
+      
+      .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+      }
+      
+      .container {
+        margin: 18px;
+      }
+      
+      .bottom-row { flex-direction: column; }
+      .stats-row { flex-direction: column; }
+    }

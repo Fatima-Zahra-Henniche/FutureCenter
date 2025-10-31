@@ -1,0 +1,65 @@
+body {
+    font-family: 'Amiri', 'Arial', sans-serif;
+    background-color: #f8f8f8;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.receipt {
+    background: white;
+    width: 350px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    text-align: center;
+    direction: rtl;
+}
+
+.logo {
+    max-width: 120px;
+    margin-bottom: 10px;
+}
+
+h2, h3 {
+    margin: 5px 0;
+}
+
+hr {
+    border: none;
+    border-top: 2px solid #000;
+    margin: 10px 0;
+}
+
+.info p {
+    text-align: right;
+    margin: 6px 0;
+    font-size: 16px;
+}
+
+.footer {
+    font-size: 14px;
+    margin-top: 15px;
+}
+
+.print-btn {
+    margin-top: 20px;
+    background-color: #007bff;
+    border: none;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.print-btn:hover {
+    background-color: #0056b3;
+}
+
+/* عند الطباعة نخفي الزر */
+@media print {
+    .print-btn {
+        display: none;
+    }
+}

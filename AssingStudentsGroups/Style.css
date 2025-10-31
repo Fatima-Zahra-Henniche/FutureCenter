@@ -1,0 +1,28 @@
+body {
+  font-family: 'Tahoma';
+  direction: rtl;
+  text-align: center;
+  background: #f7f7f7;
+  margin: 50px;
+}
+
+h2 {
+  color: #333;
+}
+
+#students {
+  display: inline-block;
+  text-align: right;
+  margin-top: 20px;
+  padding: 10px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.student {
+  margin: 5px 0;
+}
+
+.buttons {
+  margin-top: 15px;
+}
