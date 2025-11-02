@@ -1,5 +1,5 @@
 <?php
-include 'db.php';
+include '../db_config.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $conn->prepare("INSERT INTO etudiants 
@@ -21,7 +21,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_POST['notes']
     );
 
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        die("Database error: " . $stmt->error);
+    }
+
     $stmt->close();
 }
 

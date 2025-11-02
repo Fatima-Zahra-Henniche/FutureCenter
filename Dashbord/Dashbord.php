@@ -88,7 +88,7 @@
     </footer>
   </div>
 
-  <script src="Dashbord.js"></script>
+  <script src="Dachbord.js"></script>
 </body>
 
 </html>

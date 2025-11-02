@@ -29,17 +29,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <body>
 
     <div class="container">
-        <img src="logo.png" alt="Logo" class="logo">
+        <img src="../img/logo.png" alt="Logo" class="logo">
         <h2>تسجيل الدخول</h2>
 
         <?php if (isset($error)) echo "<p class='error'>$error</p>"; ?>
 
         <form method="POST">
             <input type="text" name="username" placeholder="اسم المستخدم" required>
-            <div class="password-field">
-                <input type="password" name="password" id="password" placeholder="كلمة المرور" required>
-                <button type="button" id="togglePass">👁</button>
-            </div>
+            <input type="password" name="password" id="password" placeholder="كلمة المرور" required>
             <button type="submit">دخول</button>
         </form>
     </div>

@@ -106,4 +106,4 @@ async function refreshAll() {
 refreshAll();
 
 // optionally refresh every N seconds (uncomment if you want auto-refresh)
-// setInterval(refreshAll, 60_000); // every 60s
+setInterval(refreshAll, 240_000); // every 240s
