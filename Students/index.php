@@ -1,6 +1,4 @@
 <?php
-// students.php (full page) - copy/paste replace your page
-// NOTE: adjust the include path to db_config.php if needed
 include '../db_config.php';
 
 // -------------------------
@@ -175,7 +173,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
             font-family: 'Cairo', sans-serif;
             margin: 0;
             padding: 0;
-            background: #b7e6e3ff;
+            background: #FFE1AF;
             direction: rtl;
             text-align: right;
             display: flex;
@@ -183,8 +181,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         }
 
         .sidebar {
-            width: 240px;
-            background: linear-gradient(180deg, #86dfdaff, #49e7dfff);
+            width: 230px;
+            background: linear-gradient(180deg, #B77466, #E2B59A);
             color: #fff;
             display: flex;
             flex-direction: column;
@@ -220,13 +218,14 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
 
         .menu a:hover,
         .menu a.active {
-            background: rgba(255, 255, 255, .2);
+            background: #957C62;
         }
 
         .content {
             flex: 1;
             margin-right: 240px;
-            padding: 20px;
+            margin-top: 10px;
+            padding: 15px;
             box-sizing: border-box;
             overflow-x: hidden;
         }
@@ -234,11 +233,11 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         .tabs {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
         .tab-btn {
-            background: #44cfc8ff;
+            background: #B77466;
             color: white;
             border: none;
             padding: 10px 20px;
@@ -250,7 +249,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
 
         .tab-btn:hover,
         .tab-btn.active {
-            background: #84cac7ff;
+            background: #E2B59A;
         }
 
         .tab-content {
@@ -374,7 +373,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         }
 
         button {
-            background: #28a745;
+            background: #B77466;
             color: white;
             border: none;
             cursor: pointer;
@@ -382,7 +381,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         }
 
         button:hover {
-            background: #218838;
+            background: #E2B59A;
         }
 
         table {
@@ -402,7 +401,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         }
 
         th {
-            background: #4eece4ff;
+            background: #B77466;
             color: white;
         }
 
@@ -476,9 +475,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
 <body>
     <!-- Sidebar -->
     <aside class="sidebar">
-        <h2>Gestion École</h2>
+        <h2>📚 إدارة الطلاب</h2>
         <nav class="menu">
-            <a href="../Dashbord/Dashbord.php">📊 لوحة التحكم</a>
+            <a href="../Dashbord/Dashbord.php">📊 الرئيسية</a>
             <a href="../Students/AddStudent.php" class="active">👨‍🎓 الطلاب</a>
             <a href="../Groups/Groups.php">👥 الأفواج</a>
             <a href="../AssingStudentsGroups/index.php">🔗 ربط الطلاب بالأفواج</a>
@@ -490,16 +489,14 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
 
     <!-- Main Content -->
     <div class="content">
-        <h2>📚 إدارة الطلاب</h2>
-
         <!-- Tabs -->
         <div class="tabs">
-            <button class="tab-btn active" onclick="showTab(event, 'addTab')">➕ إضافة طالب</button>
-            <button class="tab-btn" onclick="showTab(event, 'listTab')">📋 قائمة الطلاب</button>
+            <button class="tab-btn active" onclick="showTab(event, 'listTab')">📋 قائمة الطلاب</button>
+            <button class="tab-btn" onclick="showTab(event, 'addTab')">➕ إضافة طالب</button>
         </div>
 
         <!-- Add Student Form -->
-        <div id="addTab" class="tab-content active">
+        <div id="addTab" class="tab-content">
             <form action="AddStudent.php" method="POST">
                 <input type="text" name="id_etudiant" placeholder="رقم التسجيل" required>
                 <input type="text" name="prenom" placeholder="اللقب" required>
@@ -524,7 +521,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         </div>
 
         <!-- Students List -->
-        <div id="listTab" class="tab-content">
+        <div id="listTab" class="tab-content active">
             <!-- Search and Filter Navigation -->
             <div class="search-nav">
                 <form method="GET" class="search-form" onsubmit="return false;">

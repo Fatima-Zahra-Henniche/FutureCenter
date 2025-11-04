@@ -78,6 +78,12 @@
       flex: 1;
     }
 
+    .header-image {
+      width: 100%;
+      border-radius: 8px;
+      margin-bottom: 18px;
+    }
+
     /* Header */
     .header { margin-bottom: 12px; }
     .header h1 { margin: 0 0 6px 0; font-size: 20px; font-weight: 700; }

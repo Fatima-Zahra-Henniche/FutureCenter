@@ -1,78 +1,104 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const API_URL = "groups_api.php";
+  const tbody = document.querySelector("#groups-table tbody");
+  const modal = document.getElementById("editModal");
 
-  const tabs = document.querySelectorAll(".tab-button");
-  const contents = document.querySelectorAll(".tab-content");
-
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      tabs.forEach((t) => t.classList.remove("active"));
-      contents.forEach((c) => c.classList.remove("active"));
-      tab.classList.add("active");
-      document.getElementById(tab.dataset.tab).classList.add("active");
-    });
-  });
-
-  // 🔹 Load groups
+  // Load groups
   async function loadGroups() {
-    const res = await fetch(`${API_URL}?action=list`);
-    const data = await res.json();
-    const tbody = document.querySelector("#groups-table tbody");
+    const data = await fetchJson("Groups_api.php?action=list");
+    if (!data) return;
     tbody.innerHTML = "";
 
     data.forEach((g) => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
         <td>${g.id}</td>
         <td>${g.nom}</td>
-        <td>${parseFloat(g.prix_seance).toFixed(2)} DA</td>
+        <td>${g.prix_seance} دج</td>
         <td>${g.capacite_max}</td>
-        <td>0</td>
+        <td>${g.nombre_etudiants || 0}</td>
         <td><button class="edit-btn" data-id="${g.id}">تعديل</button></td>
         <td><button class="delete-btn" data-id="${g.id}">حذف</button></td>
       `;
-      tbody.appendChild(row);
+      tbody.appendChild(tr);
     });
   }
 
   loadGroups();
 
-  // 🔹 Add new group
+  // Add new group
   document.getElementById("add-btn").addEventListener("click", async () => {
     const nom = document.getElementById("nom").value.trim();
-    const prix = parseFloat(document.getElementById("prix").value.trim());
-    const capacite = parseInt(document.getElementById("capacite").value.trim());
+    const prix = document.getElementById("prix").value.trim();
+    const capacite = document.getElementById("capacite").value.trim();
 
-    if (!nom || isNaN(prix)) {
-      alert("اسم الفوج وسعر الحصة مطلوبان!");
-      return;
-    }
+    if (!nom || prix === "") return alert("⚠️ أدخل اسم الفوج وسعر الحصة.");
 
-    await fetch(`${API_URL}?action=add`, {
+    await fetchJson("Groups_api.php?action=add", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nom, prix, capacite }),
     });
 
     alert("✅ تم إنشاء الفوج بنجاح!");
-    document.getElementById("nom").value = "";
-    document.getElementById("prix").value = "";
-    document.getElementById("capacite").value = "20";
     loadGroups();
   });
 
-  // 🔹 Delete
+  let currentId = null;
+
+  // Open edit modal
+  document.addEventListener("click", (e) => {
+    if (e.target.classList.contains("edit-btn")) {
+      const tr = e.target.closest("tr");
+      currentId = e.target.dataset.id;
+      document.getElementById("editNom").value = tr.children[1].textContent;
+      document.getElementById("editPrix").value = parseFloat(
+        tr.children[2].textContent
+      );
+      document.getElementById("editCapacite").value = parseInt(
+        tr.children[3].textContent
+      );
+      modal.style.display = "flex";
+    }
+  });
+
+  // Save edit
+  document.getElementById("saveEdit").addEventListener("click", async () => {
+    const nom = document.getElementById("editNom").value.trim();
+    const prix = parseFloat(document.getElementById("editPrix").value);
+    const capacite = parseInt(document.getElementById("editCapacite").value);
+
+    if (!nom || isNaN(prix)) return alert("⚠️ يرجى إدخال البيانات بشكل صحيح!");
+
+    await fetchJson("Groups_api.php?action=edit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: currentId, nom, prix, capacite }),
+    });
+
+    modal.style.display = "none";
+    alert("✅ تم التعديل بنجاح!");
+    loadGroups();
+  });
+
+  document.getElementById("cancelEdit").addEventListener("click", () => {
+    modal.style.display = "none";
+  });
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) modal.style.display = "none";
+  });
+
+  // Delete group
   document.addEventListener("click", async (e) => {
     if (e.target.classList.contains("delete-btn")) {
-      if (confirm("هل أنت متأكد من حذف هذا الفوج؟")) {
-        const id = e.target.dataset.id;
-        await fetch(`${API_URL}?action=delete`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id }),
-        });
-        loadGroups();
-      }
+      if (!confirm("هل أنت متأكد من الحذف؟")) return;
+      const id = e.target.dataset.id;
+      await fetch(`${API_URL}?action=delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      loadGroups();
     }
   });
 });

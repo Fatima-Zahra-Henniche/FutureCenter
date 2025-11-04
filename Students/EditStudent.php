@@ -58,7 +58,7 @@ if (!$student) {
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: #FFE1AF;
             color: #333;
             line-height: 1.6;
             padding: 20px;
@@ -76,7 +76,7 @@ if (!$student) {
 
         /* Header styles */
         .header {
-            background: linear-gradient(135deg, #3498db, #2c3e50);
+            background: linear-gradient(135deg, #E2B59A, #B77466);
             color: white;
             padding: 20px;
             text-align: center;
@@ -133,7 +133,7 @@ if (!$student) {
         input:focus,
         textarea:focus,
         select:focus {
-            border-color: #3498db;
+            border-color: #B77466;
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
             outline: none;
         }
@@ -172,23 +172,23 @@ if (!$student) {
         }
 
         .btn-primary {
-            background: #3498db;
+            background: #B77466;
             color: white;
         }
 
         .btn-primary:hover {
-            background: #2980b9;
+            background: #E2B59A;
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         .btn-secondary {
-            background: #95a5a6;
+            background: #B77466;
             color: white;
         }
 
         .btn-secondary:hover {
-            background: #7f8c8d;
+            background: #E2B59A;
         }
 
         .btn-icon {
@@ -205,9 +205,9 @@ if (!$student) {
         }
 
         .alert-info {
-            background: #d6eaf8;
+            background: #FFE1AF;
             color: #2c3e50;
-            border-left: 4px solid #3498db;
+            border-left: 4px solid #a87d61ff;
         }
 
         .alert-error {
