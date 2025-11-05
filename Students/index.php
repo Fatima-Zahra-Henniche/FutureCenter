@@ -570,6 +570,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                     <th>الاسم</th>
                     <th>تاريخ الميلاد</th>
                     <th>المستوى</th>
+                    <th>الرصيد </th>
                     <th>الهاتف</th>
                     <th>الإجراءات</th>
                 </tr>
@@ -582,6 +583,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                             <td><?= htmlspecialchars($row['nom']) ?></td>
                             <td><?= htmlspecialchars($row['date_naissance']) ?></td>
                             <td><?= htmlspecialchars($row['niveau']) ?></td>
+                            <td class="balance-cell" data-id="<?= $row['id'] ?>">...</td>
                             <td><?= htmlspecialchars($row['telephone']) ?></td>
                             <td>
                                 <a href="EditStudent.php?id=<?= $row['id'] ?>" class="action-btn edit-btn">✏️ تعديل</a>
@@ -606,6 +608,27 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
     </div>
 
     <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const cells = document.querySelectorAll(".balance-cell");
+            for (const cell of cells) {
+                const id = cell.dataset.id;
+                try {
+                    const res = await fetch(`Student_api.php?action=balance&id=${id}`);
+                    const data = await res.json();
+                    if (data.balance !== undefined) {
+                        const balance = Number(data.balance).toFixed(2);
+                        cell.textContent = balance + " دج";
+                        cell.style.color = balance < 0 ? "red" : "green";
+                    } else {
+                        cell.textContent = "0.00 دج";
+                    }
+                } catch (e) {
+                    cell.textContent = "خطأ";
+                }
+            }
+        });
+
+
         function showTab(event, tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));

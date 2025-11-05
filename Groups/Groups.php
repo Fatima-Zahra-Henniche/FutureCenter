@@ -125,6 +125,24 @@
       animation: fadeIn 0.3s ease-in-out;
     }
 
+    .search-bar {
+      margin-bottom: 20px;
+      text-align: right;
+    }
+
+    .search-bar label {
+      margin-left: 10px;
+      font-weight: 600;
+    }
+
+    .search-bar input {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 250px;
+      text-align: right;
+    }
+
     @keyframes fadeIn {
       from {
         opacity: 0;

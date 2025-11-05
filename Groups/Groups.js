@@ -1,28 +1,85 @@
+// Add this at the top
+async function fetchJson(url, options = {}) {
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch error:", error);
+    return null;
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const tbody = document.querySelector("#groups-table tbody");
   const modal = document.getElementById("editModal");
 
-  // Load groups
-  async function loadGroups() {
-    const data = await fetchJson("Groups_api.php?action=list");
-    if (!data) return;
-    tbody.innerHTML = "";
+  // Tab switching functionality
+  document.querySelectorAll(".tab-button").forEach((button) => {
+    button.addEventListener("click", () => {
+      document
+        .querySelectorAll(".tab-button")
+        .forEach((btn) => btn.classList.remove("active"));
+      document
+        .querySelectorAll(".tab-content")
+        .forEach((content) => content.classList.remove("active"));
 
-    data.forEach((g) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${g.id}</td>
-        <td>${g.nom}</td>
-        <td>${g.prix_seance} دج</td>
-        <td>${g.capacite_max}</td>
-        <td>${g.nombre_etudiants || 0}</td>
-        <td><button class="edit-btn" data-id="${g.id}">تعديل</button></td>
-        <td><button class="delete-btn" data-id="${g.id}">حذف</button></td>
-      `;
-      tbody.appendChild(tr);
+      button.classList.add("active");
+      const tabId = button.getAttribute("data-tab");
+      document.getElementById(tabId).classList.add("active");
     });
+  });
+
+  // Search functionality
+  document.getElementById("search").addEventListener("input", (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll("#groups-table tbody tr");
+
+    rows.forEach((row) => {
+      const groupName = row.cells[1].textContent.toLowerCase();
+      if (groupName.includes(searchTerm)) {
+        row.style.display = "";
+      } else {
+        row.style.display = "none";
+      }
+    });
+  });
+
+  // Load groups function (your existing code)
+  async function loadGroups() {
+    try {
+      const rows = await fetchJson("Groups_api.php?action=list");
+      if (!rows) return;
+
+      console.log("Groups data:", rows);
+
+      tbody.innerHTML = "";
+
+      rows.forEach((g) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${g.id}</td>
+          <td>${g.nom ?? ""}</td>
+          <td>${
+            g.prix_seance !== undefined
+              ? Number(g.prix_seance).toLocaleString() + " DA"
+              : "0.00 DA"
+          }</td>
+          <td>${g.capacite_max ?? 0}</td>
+          <td>${g.students_count ?? 0}</td>
+          <td><button class="edit-btn" data-id="${g.id}">تعديل</button></td>
+          <td><button class="delete-btn" data-id="${g.id}">حذف</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (error) {
+      console.error("Error loading groups:", error);
+    }
   }
 
+  // Rest of your existing code remains the same...
   loadGroups();
 
   // Add new group
@@ -32,6 +89,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const capacite = document.getElementById("capacite").value.trim();
 
     if (!nom || prix === "") return alert("⚠️ أدخل اسم الفوج وسعر الحصة.");
+
+    console.log({ nom, prix, capacite });
 
     await fetchJson("Groups_api.php?action=add", {
       method: "POST",
@@ -93,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target.classList.contains("delete-btn")) {
       if (!confirm("هل أنت متأكد من الحذف؟")) return;
       const id = e.target.dataset.id;
-      await fetch(`${API_URL}?action=delete`, {
+      await fetchJson("Groups_api.php?action=delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),

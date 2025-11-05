@@ -29,20 +29,30 @@ function list_groups($conn)
 {
     $sql = "
     SELECT 
-      g.id,
-      g.nom,
-      g.prix_seance,
-      g.capacite_max,
-      COUNT(eg.id) AS nombre_etudiants
+        g.id, 
+        g.nom, 
+        g.prix_seance, 
+        g.capacite_max, 
+        COUNT(eg.etudiant_id) AS students_count
     FROM groupes g
     LEFT JOIN etudiants_groupes eg ON g.id = eg.groupe_id
     WHERE g.actif = 1
     GROUP BY g.id, g.nom, g.prix_seance, g.capacite_max
-    ORDER BY g.id DESC
-  ";
+    ORDER BY g.nom ASC
+    ";
+
     $res = $conn->query($sql);
+
+    if (!$res) {
+        echo json_encode(["error" => "Query failed: " . $conn->error]);
+        return;
+    }
+
     $rows = [];
-    while ($row = $res->fetch_assoc()) $rows[] = $row;
+    while ($row = $res->fetch_assoc()) {
+        $rows[] = $row;
+    }
+
     echo json_encode($rows);
 }
 
@@ -54,6 +64,7 @@ function add_group($conn)
     $stmt->execute();
     echo json_encode(["success" => true, "id" => $stmt->insert_id]);
 }
+
 
 function edit_group($conn)
 {
@@ -67,7 +78,7 @@ function edit_group($conn)
 function delete_group($conn)
 {
     $data = json_decode(file_get_contents("php://input"), true);
-    $stmt = $conn->prepare("UPDATE groupes SET actif=0 WHERE id=?");
+    $stmt = $conn->prepare("DELETE FROM groupes WHERE id=?");
     $stmt->bind_param("i", $data["id"]);
     $stmt->execute();
     echo json_encode(["success" => true]);

@@ -1,11 +1,13 @@
-<?php include "load_data.php"; ?>
+<?php include "load_Data.php"; ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
   <meta charset="UTF-8">
   <title>ربط الطلاب بالأفواج</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="Style.css">
 </head>
+
 <body>
   <h2>ربط الطلاب بالأفواج</h2>
 
@@ -27,6 +29,7 @@
     </div>
   </form>
 
-  <script src="script.js"></script>
+  <script src="Script.js"></script>
 </body>
+
 </html>
