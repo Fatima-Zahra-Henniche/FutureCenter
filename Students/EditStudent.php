@@ -58,7 +58,7 @@ if (!$student) {
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #FFE1AF;
+            background: #FFF7EE;
             color: #333;
             line-height: 1.6;
             padding: 20px;

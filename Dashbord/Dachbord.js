@@ -55,9 +55,9 @@ async function loadRecentStudents() {
     const idTd = document.createElement("td");
     idTd.textContent = r.id_etudiant ?? "";
     const nomTd = document.createElement("td");
-    nomTd.textContent = r.nom ?? "";
+    nomTd.textContent = r.prenom ?? "";
     const prenomTd = document.createElement("td");
-    prenomTd.textContent = r.prenom ?? "";
+    prenomTd.textContent = r.nom ?? "";
     const niveauTd = document.createElement("td");
     niveauTd.textContent = r.niveau ?? "";
     const dateTd = document.createElement("td");

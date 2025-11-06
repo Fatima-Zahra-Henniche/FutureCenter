@@ -2,7 +2,7 @@
 header("Content-Type: application/json");
 require_once("../../db_config.php");
 
-$sql = "SELECT id_etudiant, nom, prenom, niveau, date_inscription
+$sql = "SELECT id_etudiant, prenom, nom, niveau, date_inscription
         FROM etudiants
         WHERE actif=1
         ORDER BY date_inscription DESC

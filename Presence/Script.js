@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function loadGroups() {
-  fetch("load_groups.php")
+  fetch("loadGroups.php")
     .then((res) => res.json())
     .then((groups) => {
       const select = document.getElementById("group");
@@ -23,7 +23,7 @@ function loadGroups() {
 
 function loadStudents() {
   const gid = document.getElementById("group").value;
-  fetch("load_students.php?gid=" + gid)
+  fetch("loadStydents.php?gid=" + gid)
     .then((res) => res.json())
     .then((students) => {
       const div = document.getElementById("students");
@@ -50,7 +50,7 @@ function savePresence() {
     document.querySelectorAll("#students input:checked")
   ).map((c) => c.value);
 
-  fetch("save_presence.php", {
+  fetch("SavePresence.php", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ gid, date, timeStart, timeEnd, checked }),
