@@ -14,7 +14,7 @@ let selectedStudents = new Set();
 
 function loadStudents() {
   const keyword = document.getElementById("search").value;
-  fetch("load_students.php?search=" + keyword)
+  fetch("Search_student.php?search=" + encodeURIComponent(keyword))
     .then((res) => res.text())
     .then((html) => {
       document.getElementById("students").innerHTML = html;

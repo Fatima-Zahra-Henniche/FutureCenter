@@ -1,68 +1,88 @@
 <?php
-include "db.php";
-$data = json_decode(file_get_contents("php://input"), true);
+include "../db_config.php";
 
-$gid = intval($data["gid"]);
-$date = $data["date"];
-$tstart = $data["timeStart"];
-$tend = $data["timeEnd"];
-$checked = $data["checked"];
+header('Content-Type: application/json; charset=utf-8');
 
-$report = [];
+try {
+    // Get POSTed data
+    $data = json_decode(file_get_contents("php://input"), true);
 
-// Get price of session
-$res = $conn->query("SELECT prix_seance FROM groupes WHERE id=$gid");
-$row = $res->fetch_assoc();
-$prix = $row ? floatval($row["prix_seance"]) : 0;
+    if (!$data) {
+        throw new Exception("No data received");
+    }
 
-foreach ($checked as $sid) {
-    $sid = intval($sid);
+    $gid = intval($data['gid'] ?? 0);
+    $date = $conn->real_escape_string($data['date'] ?? '');
+    $timeStart = $conn->real_escape_string($data['timeStart'] ?? '');
+    $timeEnd = $conn->real_escape_string($data['timeEnd'] ?? '');
+    $checked = $data['checked'] ?? [];
 
-    // Get current balance
-    $res2 = $conn->query("SELECT solde, nom, prenom FROM etudiants WHERE id=$sid");
-    $st = $res2->fetch_assoc();
-    $before = floatval($st["solde"]);
+    if (!$gid || !$date) {
+        throw new Exception("Missing required fields");
+    }
 
-    // Deduct price
-    $after = $before - $prix;
-    if ($after < 0) $after = 0;
+    // Get group price
+    $groupPriceQuery = $conn->query("SELECT prix_seance FROM groupes WHERE id = $gid");
+    $groupPrice = $groupPriceQuery->fetch_assoc()['prix_seance'] ?? 100;
 
-    // Update balance
-    $conn->query("UPDATE etudiants SET solde=$after WHERE id=$sid");
+    // Begin transaction
+    $conn->begin_transaction();
 
-    // Insert presence
-    $conn->query("INSERT INTO presence 
-    (etudiant_id, groupe_id, date, time_start, time_end, statut, montant_debite)
-    VALUES ($sid, $gid, '$date', '$tstart', '$tend', 'Present', $prix)");
+    // Fetch students of this group
+    $sql = "SELECT e.id, e.nom, e.prenom, COALESCE(e.balance, 0) as balance 
+            FROM etudiants e
+            JOIN etudiants_groupes eg ON e.id = eg.etudiant_id
+            WHERE eg.groupe_id = $gid AND e.actif=1
+            ORDER BY e.nom, e.prenom";
 
-    $report[] = [
-        "nom" => $st["nom"],
-        "prenom" => $st["prenom"],
-        "status" => "حاضر",
-        "before" => $before,
-        "after" => $after
-    ];
-}
+    $res = $conn->query($sql);
 
-// Absent students (not checked)
-$res3 = $conn->query("SELECT e.id, e.nom, e.prenom, e.solde
-                      FROM etudiants e
-                      JOIN etudiants_groupes eg ON e.id=eg.etudiant_id
-                      WHERE eg.groupe_id=$gid AND e.actif=1");
-while ($s = $res3->fetch_assoc()) {
-    if (!in_array($s["id"], $checked)) {
-        $conn->query("INSERT INTO presence 
-      (etudiant_id, groupe_id, date, time_start, time_end, statut, montant_debite)
-      VALUES ({$s['id']}, $gid, '$date', '$tstart', '$tend', 'Absent', 0)");
+    if (!$res) {
+        throw new Exception("Error fetching students: " . $conn->error);
+    }
+
+    $report = [];
+
+    while ($r = $res->fetch_assoc()) {
+        $studentId = $r['id'];
+        $before = floatval($r['balance']);
+        $status = in_array($studentId, $checked) ? 'Present' : 'Absent'; // Match your database enum
+
+        // Update balance only if present
+        $after = $before;
+        if ($status === 'Present') {
+            $after = $before - $groupPrice;
+
+            // Update student balance
+            $updateSql = "UPDATE etudiants SET balance = $after WHERE id = $studentId";
+            if (!$conn->query($updateSql)) {
+                throw new Exception("Error updating balance: " . $conn->error);
+            }
+        }
+
+        // Insert attendance record - match your table structure
+        $insertSql = "INSERT INTO presence (etudiant_id, groupe_id, date, time_start, time_end, statut, montant_debite) 
+                      VALUES ($studentId, $gid, '$date', '$timeStart', '$timeEnd', '$status', " . ($status === 'Present' ? $groupPrice : 0) . ")";
+
+        if (!$conn->query($insertSql)) {
+            throw new Exception("Error inserting attendance: " . $conn->error);
+        }
+
         $report[] = [
-            "nom" => $s["nom"],
-            "prenom" => $s["prenom"],
-            "status" => "غائب",
-            "before" => $s["solde"],
-            "after" => $s["solde"]
+            'nom' => $r['nom'],
+            'prenom' => $r['prenom'],
+            'status' => $status,
+            'before' => $before,
+            'after' => $after
         ];
     }
+
+    $conn->commit();
+    echo json_encode($report, JSON_UNESCAPED_UNICODE);
+} catch (Exception $e) {
+    $conn->rollback();
+    http_response_code(500);
+    echo json_encode(['error' => $e->getMessage()]);
 }
 
-echo json_encode($report, JSON_UNESCAPED_UNICODE);
 $conn->close();

@@ -192,3 +192,19 @@ WHERE etudiant_id = p_etudiant_id
 ORDER BY date_paiement DESC;
 END IF;
 END // DELIMITER;
+ALTER TABLE etudiants
+ADD COLUMN balance DOUBLE DEFAULT 0;
+-- Mettre à jour le solde initial de tous les étudiants
+UPDATE etudiants e
+SET balance = (
+        (
+            SELECT IFNULL(SUM(montant), 0)
+            FROM paiements
+            WHERE etudiant_id = e.id
+        ) - (
+            SELECT IFNULL(SUM(montant_debite), 0)
+            FROM presence
+            WHERE etudiant_id = e.id
+        )
+    );
+-- Mettre à jour le solde lors de l'ajout d'un paiement

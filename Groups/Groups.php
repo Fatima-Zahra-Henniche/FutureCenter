@@ -10,7 +10,7 @@
     :root {
       --primary: #B77466;
       --primary-light: #E2B59A;
-      --secondary: #957C62;
+      --secondary: #DEBA9D;
       --background: #FFF7EE;
       --white: #ffffff;
       --text-dark: #333333;
@@ -344,45 +344,60 @@
       background: #f5f5f5;
     }
 
+    /* Action Buttons */
     .action-buttons {
       display: flex;
-      gap: 8px;
       justify-content: center;
+      gap: 10px;
     }
 
-    .btn-edit,
-    .btn-delete {
+    .edit-btn,
+    .delete-btn {
       border: none;
-      padding: 8px 14px;
-      border-radius: 8px;
-      cursor: pointer;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 15px;
       font-weight: 600;
-      transition: var(--transition);
-      font-size: 14px;
-      display: flex;
+      cursor: pointer;
+      display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
+      transition: all 0.25s ease;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
     }
 
-    .btn-edit {
-      background: #2980b9;
+    /* Edit Button */
+    .edit-btn {
+      background: linear-gradient(135deg, #2980b9, #3498db);
       color: #fff;
     }
 
-    .btn-edit:hover {
-      background: #3498db;
-      transform: translateY(-2px);
+    .edit-btn i {
+      font-size: 14px;
     }
 
-    .btn-delete {
-      background: #c0392b;
+    .edit-btn:hover {
+      background: linear-gradient(135deg, #3498db, #5dade2);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(52, 152, 219, 0.35);
+    }
+
+    /* Delete Button */
+    .delete-btn {
+      background: linear-gradient(135deg, #c0392b, #e74c3c);
       color: #fff;
     }
 
-    .btn-delete:hover {
-      background: #e74c3c;
-      transform: translateY(-2px);
+    .delete-btn i {
+      font-size: 14px;
     }
+
+    .delete-btn:hover {
+      background: linear-gradient(135deg, #e74c3c, #ff6b5a);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(231, 76, 60, 0.35);
+    }
+
 
     /* Modal */
     .custom-modal {

@@ -1,203 +1,4 @@
-<?php
-include '../db_config.php';
-
-// -------------------------
-// Prepare search/query logic
-// -------------------------
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
-$exact_match = isset($_GET['exact_match']) ? true : false;
-$niveau_filter = isset($_GET['niveau_filter']) ? $_GET['niveau_filter'] : 'جميع المستويات';
-
-// Build the query
-$query = "
-SELECT e.id, e.id_etudiant, e.nom, e.prenom, e.date_naissance, e.niveau, e.telephone, e.email, e.nom_parent,
-       GROUP_CONCAT(g.nom SEPARATOR ', ') AS groupes
-FROM etudiants e
-LEFT JOIN etudiants_groupes eg ON e.id = eg.etudiant_id
-LEFT JOIN groupes g ON eg.groupe_id = g.id
-WHERE e.actif = 1
-";
-
-$params = [];
-$types = "";
-
-if (!empty($search)) {
-    $operator = $exact_match ? "=" : "LIKE";
-
-    if (!function_exists('pattern')) {
-        function pattern($value, $exact)
-        {
-            return $exact ? $value : "%$value%";
-        }
-    }
-
-    $conditions = [];
-
-    // 1️⃣ Direct ID search
-    $conditions[] = "CAST(id_etudiant AS CHAR) $operator ?";
-    $params[] = pattern($search, $exact_match);
-    $types .= "s";
-
-    // 2️⃣ Search on nom, prenom alone
-    $conditions[] = "nom $operator ?";
-    $conditions[] = "prenom $operator ?";
-    $params[] = pattern($search, $exact_match);
-    $params[] = pattern($search, $exact_match);
-    $types .= "ss";
-
-    // 3️⃣ Search on nom+prenom / prenom+nom combinations
-    $conditions[] = "CONCAT(nom, ' ', prenom) $operator ?";
-    $conditions[] = "CONCAT(prenom, ' ', nom) $operator ?";
-    $params[] = pattern($search, $exact_match);
-    $params[] = pattern($search, $exact_match);
-    $types .= "ss";
-
-    // 4️⃣ Search with date_naissance
-    $conditions[] = "CONCAT(nom, ' ', prenom, ' ', date_naissance) $operator ?";
-    $conditions[] = "CONCAT(prenom, ' ', nom, ' ', date_naissance) $operator ?";
-    $conditions[] = "CONCAT(nom, ' ', date_naissance) $operator ?";
-    $conditions[] = "CONCAT(prenom, ' ', date_naissance) $operator ?";
-    $params[] = pattern($search, $exact_match);
-    $params[] = pattern($search, $exact_match);
-    $params[] = pattern($search, $exact_match);
-    $params[] = pattern($search, $exact_match);
-    $types .= "ssss";
-
-    // 5️⃣ If multiple words, generate smart combinations
-    $words = explode(' ', $search);
-    if (count($words) >= 2) {
-        $full_search = implode(' ', $words);
-        $conditions[] = "CONCAT(nom, ' ', prenom) $operator ?";
-        $conditions[] = "CONCAT(prenom, ' ', nom) $operator ?";
-        $params[] = pattern($full_search, $exact_match);
-        $params[] = pattern($full_search, $exact_match);
-        $types .= "ss";
-    }
-
-    if (count($words) >= 3) {
-        $full_search = implode(' ', $words);
-        $conditions[] = "CONCAT(nom, ' ', prenom, ' ', date_naissance) $operator ?";
-        $conditions[] = "CONCAT(prenom, ' ', nom, ' ', date_naissance) $operator ?";
-        $params[] = pattern($full_search, $exact_match);
-        $params[] = pattern($full_search, $exact_match);
-        $types .= "ss";
-    }
-
-    $query .= " AND (" . implode(" OR ", $conditions) . ")";
-}
-
-if ($niveau_filter != "جميع المستويات") {
-    $query .= " AND niveau = ?";
-    $params[] = $niveau_filter;
-    $types .= "s";
-}
-
-$query .= " GROUP BY e.id ORDER BY e.nom, e.prenom";
-
-// Prepare and execute
-$stmt = $conn->prepare($query);
-if ($stmt === false) {
-    die("Prepare failed: " . htmlspecialchars($conn->error));
-}
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
-$stmt->execute();
-$result = $stmt->get_result();
-$total_students = $result->num_rows;
-
-// If AJAX request, return only the fragment (results-info + table) and exit
-if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
-?>
-    <div class="results-info">
-        <div class="results-stats">
-            <span class="stat-item">
-                <i class="fas fa-users"></i>
-                <strong>عدد الطلاب:</strong> <?= $total_students ?> طالب
-            </span>
-            <?php if (!empty($search)): ?>
-                <span class="stat-item">
-                    <i class="fas fa-search"></i>
-                    <strong>نتائج البحث عن:</strong> "<?= htmlspecialchars($search) ?>"
-                </span>
-            <?php endif; ?>
-            <?php if ($niveau_filter != "جميع المستويات"): ?>
-                <span class="stat-item">
-                    <i class="fas fa-filter"></i>
-                    <strong>المستوى:</strong> <?= htmlspecialchars($niveau_filter) ?>
-                </span>
-            <?php endif; ?>
-        </div>
-    </div>
-
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>رقم التسجيل</th>
-                    <th>اللقب</th>
-                    <th>الاسم</th>
-                    <th>تاريخ الميلاد</th>
-                    <th>المستوى</th>
-                    <th>الأفواج</th>
-                    <th>الرصيد</th>
-                    <th>الهاتف</th>
-                    <th>الإجراءات</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if ($total_students > 0): ?>
-                    <?php while ($row = $result->fetch_assoc()): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($row['id_etudiant']) ?></td>
-                            <td><?= htmlspecialchars($row['prenom']) ?></td>
-                            <td><?= htmlspecialchars($row['nom']) ?></td>
-                            <td><?= htmlspecialchars($row['date_naissance']) ?></td>
-                            <td><span class="level-badge"><?= htmlspecialchars($row['niveau']) ?></span></td>
-                            <td><?= htmlspecialchars($row['groupes']) ?></td>
-                            <td class="balance-cell" data-id="<?= $row['id'] ?>">
-                                <div class="balance-loading">
-                                    <i class="fas fa-spinner fa-spin"></i>
-                                </div>
-                            </td>
-                            <td><?= htmlspecialchars($row['telephone']) ?></td>
-                            <td>
-                                <div class="action-buttons">
-                                    <a href="EditStudent.php?id=<?= $row['id'] ?>" class="btn btn-edit" title="تعديل">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="DeleteStudent.php?id=<?= $row['id'] ?>" class="btn btn-delete" title="حذف"
-                                        onclick="return confirm('هل أنت متأكد من حذف هذا الطالب من النظام ؟')">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <tr>
-                        <td colspan="9" class="no-data">
-                            <div class="no-data-content">
-                                <i class="fas fa-search fa-2x"></i>
-                                <h3>
-                                    <?php if (!empty($search) || $niveau_filter != "جميع المستويات"): ?>
-                                        لم يتم العثور على طلاب مطابقين لمعايير البحث
-                                    <?php else: ?>
-                                        لا توجد طلاب مسجلين في النظام
-                                    <?php endif; ?>
-                                </h3>
-                                <p>جرب تعديل معايير البحث أو أضف طلاب جدد</p>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
-    </div>
-<?php
-    exit;
-}
-?>
+<?php include '../db_config.php'; ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 
@@ -211,7 +12,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         :root {
             --primary: #B77466;
             --primary-light: #E2B59A;
-            --secondary: #957C62;
+            --secondary: #DEBA9D;
             --background: #FFF7EE;
             --white: #ffffff;
             --text-dark: #333333;
@@ -761,7 +562,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         </div>
         <nav class="menu">
             <a href="../Dashbord/Dashbord.php"><i class="fas fa-chart-line"></i> <span>الرئيسية</span></a>
-            <a href="../Students/AddStudent.php" class="active"><i class="fas fa-user-graduate"></i> <span>الطلاب</span></a>
+            <a href="../Students/index.php" class="active"><i class="fas fa-user-graduate"></i> <span>الطلاب</span></a>
             <a href="../Groups/Groups.php"><i class="fas fa-users"></i> <span>الأفواج</span></a>
             <a href="../AssingStudentsGroups/index.php"><i class="fas fa-link"></i> <span>ربط الطلاب بالأفواج</span></a>
             <a href="../Presence/index.php"><i class="fas fa-clock"></i> <span>الحضور</span></a>
@@ -780,6 +581,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
             </button>
         </div>
 
+        <!-- ✅ Add Student Form -->
         <div id="addTab" class="tab-content">
             <form action="AddStudent.php" method="POST">
                 <input type="text" name="id_etudiant" placeholder="رقم التسجيل" required>
@@ -800,229 +602,47 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                 <input type="text" name="tel_parent" placeholder="هاتف ولي الأمر">
                 <textarea name="adresse" placeholder="العنوان"></textarea>
                 <textarea name="notes" placeholder="ملاحظات"></textarea>
-                <button type="submit">
-                    <i class="fas fa-user-plus"></i> إضافة طالب
-                </button>
+                <button type="submit"><i class="fas fa-user-plus"></i> إضافة طالب</button>
             </form>
         </div>
 
+        <!-- ✅ Student List -->
         <div id="listTab" class="tab-content active">
             <div class="search-nav">
-                <form method="GET" class="search-form" id="searchForm">
+                <form id="searchForm" class="search-form">
                     <div class="form-group">
                         <label for="search">بحث عن الطلاب:</label>
                         <input type="text" id="search" name="search" class="search-input"
-                            placeholder="ابحث برقم التسجيل، الاسم، اللقب، تاريخ الميلاد..."
-                            value="<?= htmlspecialchars($search) ?>">
+                            placeholder="ابحث برقم التسجيل، الاسم، اللقب، تاريخ الميلاد...">
                         <div class="checkbox-group">
-                            <input type="checkbox" id="exact_match" name="exact_match" value="1"
-                                <?= $exact_match ? 'checked' : '' ?>>
+                            <input type="checkbox" id="exact_match" name="exact_match" value="1">
                             <label for="exact_match">بحث مطابق تماماً</label>
                         </div>
                     </div>
-
                     <div class="form-group">
                         <label for="niveau_filter">تصفية حسب المستوى:</label>
                         <select id="niveau_filter" name="niveau_filter" class="search-input">
                             <option value="جميع المستويات">جميع المستويات</option>
-                            <option value="الابتدائي" <?= ($niveau_filter == 'الابتدائي') ? 'selected' : '' ?>>الابتدائي</option>
-                            <option value="متوسط" <?= ($niveau_filter == 'متوسط') ? 'selected' : '' ?>>متوسط</option>
-                            <option value="الثانوي" <?= ($niveau_filter == 'الثانوي') ? 'selected' : '' ?>>الثانوي</option>
-                            <option value="بكالوريا" <?= ($niveau_filter == 'بكالوريا') ? 'selected' : '' ?>>بكالوريا</option>
-                            <option value="جامعي" <?= ($niveau_filter == 'جامعي') ? 'selected' : '' ?>>جامعي</option>
+                            <option value="الابتدائي">الابتدائي</option>
+                            <option value="متوسط">متوسط</option>
+                            <option value="الثانوي">الثانوي</option>
+                            <option value="بكالوريا">بكالوريا</option>
+                            <option value="جامعي">جامعي</option>
                         </select>
                     </div>
                 </form>
-
-                <div id="searchResults">
-                    <div class="results-info">
-                        <div class="results-stats">
-                            <span class="stat-item">
-                                <i class="fas fa-users"></i>
-                                <strong>عدد الطلاب:</strong> <?= $total_students ?> طالب
-                            </span>
-                            <?php if (!empty($search)): ?>
-                                <span class="stat-item">
-                                    <i class="fas fa-search"></i>
-                                    <strong>نتائج البحث عن:</strong> "<?= htmlspecialchars($search) ?>"
-                                </span>
-                            <?php endif; ?>
-                            <?php if ($niveau_filter != "جميع المستويات"): ?>
-                                <span class="stat-item">
-                                    <i class="fas fa-filter"></i>
-                                    <strong>المستوى:</strong> <?= htmlspecialchars($niveau_filter) ?>
-                                </span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
             </div>
 
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>رقم التسجيل</th>
-                            <th>اللقب</th>
-                            <th>الاسم</th>
-                            <th>تاريخ الميلاد</th>
-                            <th>المستوى</th>
-                            <th>الأفواج</th>
-                            <th>الرصيد</th>
-                            <th>الهاتف</th>
-                            <th>الإجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if ($total_students > 0): ?>
-                            <?php while ($row = $result->fetch_assoc()): ?>
-                                <tr>
-                                    <td><?= htmlspecialchars($row['id_etudiant']) ?></td>
-                                    <td><?= htmlspecialchars($row['prenom']) ?></td>
-                                    <td><?= htmlspecialchars($row['nom']) ?></td>
-                                    <td><?= htmlspecialchars($row['date_naissance']) ?></td>
-                                    <td><span class="level-badge"><?= htmlspecialchars($row['niveau']) ?></span></td>
-                                    <td><?= htmlspecialchars($row['groupes']) ?></td>
-                                    <td class="balance-cell" data-id="<?= $row['id'] ?>">
-                                        <div class="balance-loading">
-                                            <i class="fas fa-spinner fa-spin"></i>
-                                        </div>
-                                    </td>
-                                    <td><?= htmlspecialchars($row['telephone']) ?></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <a href="EditStudent.php?id=<?= $row['id'] ?>" class="btn btn-edit" title="تعديل">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a href="DeleteStudent.php?id=<?= $row['id'] ?>" class="btn btn-delete" title="حذف"
-                                                onclick="return confirm('هل أنت متأكد من حذف هذا الطالب من النظام ؟')">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="9" class="no-data">
-                                    <div class="no-data-content">
-                                        <i class="fas fa-search fa-2x"></i>
-                                        <h3>
-                                            <?php if (!empty($search) || $niveau_filter != "جميع المستويات"): ?>
-                                                لم يتم العثور على طلاب مطابقين لمعايير البحث
-                                            <?php else: ?>
-                                                لا توجد طلاب مسجلين في النظام
-                                            <?php endif; ?>
-                                        </h3>
-                                        <p>جرب تعديل معايير البحث أو أضف طلاب جدد</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+            <!-- Results area -->
+            <div id="searchResults">
+                <div class="loading-msg">
+                    <i class="fas fa-spinner fa-spin"></i> جاري تحميل قائمة الطلاب...
+                </div>
             </div>
         </div>
     </div>
 
-    <script>
-        // Load balances for all balance cells
-        async function loadBalances() {
-            const cells = document.querySelectorAll(".balance-cell");
-            for (const cell of cells) {
-                const id = cell.dataset.id;
-                try {
-                    const res = await fetch(`Student_api.php?action=balance&id=${id}`);
-                    const data = await res.json();
-                    if (data.balance !== undefined) {
-                        const balance = Number(data.balance).toFixed(2);
-                        cell.innerHTML = `<strong>${balance} دج</strong>`;
-                        cell.style.color = balance < 0 ? "#e74c3c" : "#27ae60";
-                    } else {
-                        cell.innerHTML = '<strong>0.00 دج</strong>';
-                        cell.style.color = "#666";
-                    }
-                } catch (e) {
-                    cell.innerHTML = '<span style="color: #e74c3c;">خطأ</span>';
-                    console.error('Balance fetch error:', e);
-                }
-            }
-        }
-
-        // Tab switching
-        function showTab(event, tabId) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
-        }
-
-        // Auto-search with AJAX
-        function initAutoSearch() {
-            const searchInput = document.getElementById("search");
-            const niveauFilter = document.getElementById("niveau_filter");
-            const exactMatch = document.getElementById("exact_match");
-            const form = document.getElementById("searchForm");
-            const listTab = document.getElementById("listTab");
-
-            let timer;
-
-            async function performSearch() {
-                const formData = new FormData(form);
-                const params = new URLSearchParams(formData);
-                params.set('ajax', '1');
-
-                try {
-                    const res = await fetch('index.php?' + params.toString());
-                    const html = await res.text();
-
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-
-                    // Replace results-info
-                    const newInfo = doc.querySelector('.results-info');
-                    const oldInfo = document.querySelector('#searchResults .results-info');
-                    if (newInfo && oldInfo) {
-                        oldInfo.replaceWith(newInfo);
-                    }
-
-                    // Replace table container
-                    const newTableContainer = doc.querySelector('.table-container');
-                    const oldTableContainer = listTab.querySelector('.table-container');
-                    if (newTableContainer && oldTableContainer) {
-                        oldTableContainer.replaceWith(newTableContainer);
-                        // Load balances for new table
-                        await loadBalances();
-                    }
-                } catch (err) {
-                    console.error('AJAX search error:', err);
-                }
-            }
-
-            function delayedSearch() {
-                clearTimeout(timer);
-                timer = setTimeout(performSearch, 400);
-            }
-
-            searchInput.addEventListener('input', delayedSearch);
-            niveauFilter.addEventListener('change', performSearch);
-            exactMatch.addEventListener('change', performSearch);
-        }
-
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadBalances();
-            initAutoSearch();
-
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('search') || urlParams.has('niveau_filter')) {
-                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-                document.getElementById('listTab').classList.add('active');
-                document.querySelector('.tab-btn:first-child').classList.add('active');
-            }
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 
 </html>

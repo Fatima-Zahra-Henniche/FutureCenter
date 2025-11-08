@@ -69,9 +69,17 @@ document.addEventListener("DOMContentLoaded", () => {
           }</td>
           <td>${g.capacite_max ?? 0}</td>
           <td>${g.students_count ?? 0}</td>
-          <td><button class="edit-btn" data-id="${g.id}">تعديل</button></td>
-          <td><button class="delete-btn" data-id="${g.id}">حذف</button></td>
-        `;
+          <td>
+            <div class="action-buttons">
+              <button class="edit-btn" data-id="${g.id}">
+                <i class="fas fa-edit"></i> تعديل
+              </button>
+              <button class="delete-btn" data-id="${g.id}">
+                <i class="fas fa-trash-alt"></i> حذف
+              </button>
+            </div>
+          </td>
+          `;
         tbody.appendChild(tr);
       });
     } catch (error) {
@@ -97,6 +105,14 @@ document.addEventListener("DOMContentLoaded", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nom, prix, capacite }),
     });
+
+    // ✅ Clear the form fields
+    document.getElementById("nom").value = "";
+    document.getElementById("prix").value = "";
+    document.getElementById("capacite").value = "20"; // reset to default
+
+    // Optional: focus again on the first input
+    document.getElementById("nom").focus();
 
     alert("✅ تم إنشاء الفوج بنجاح!");
     loadGroups();
